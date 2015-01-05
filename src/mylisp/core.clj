@@ -84,7 +84,7 @@
       `(comment ~expr))))
 
 (def ast->clj-map 
-  {:SYMBOL (fn [& args] (symbol (apply str args)))
+  {:SYMBOL (fn [& args] (-> str (apply args) symbol)) 
    :DEC-INT read-string
    :INTEGER identity
    :NUMBER number-fn
@@ -102,7 +102,7 @@
    :NEW-LINE (fn [])
    :KEYWORD keyword
    :PROGRAM (fn [& args] `(do ~@args))
-   :HEX-INT (fn [expr] (read-string (format "0x%s" expr)))
+   :HEX-INT (fn [expr] (->> expr (format "0x%s") read-string))  
    }
   )
 
