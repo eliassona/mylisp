@@ -3,16 +3,9 @@
   (:require [instaparse.core :as insta]
             [clojure.core.match :refer [match]]))
 
-(defmacro dbg[x] `(let [x# ~x] (println '~x "=" x#) x#))
-
-(defmulti ast->clj first) 
-
-(defmulti special-char-macro (fn [sc expr] sc))
-
-(defn interleave-with [args delim] (apply str (butlast (interleave args (map (fn [_] delim) args)))))
+(defmacro dbg [x] `(let [x# ~x] (println '~x "=" x#) x#))
 
 (defn grammar []
-  (str
      "
      PROGRAM = EXPR*  
      EXPR = OPTIONAL-SPACE (SINGLE-LINE-COMMENT / NUMBER / (STRING |  LIST | VECTOR | MAP | SYMBOL | KEYWORD | (READER-MACRO | (SPECIAL-CHARS EXPR))))
@@ -29,7 +22,7 @@
      SET = (<'{'> OPTIONAL-SPACE <'}'>) |  (<'{'> ARGS <'}'>)
      <ARGS> = (EXPR SPACE)* EXPR
      KEYWORD = <':'> SYMBOL
-     SYMBOL = #'[^\\'`~@\\(\\)\\[\\]{}:;#,\\^ \t\n0123456789]' #'[^\\'`~@\\(\\)\\[\\]{}:;#,\\^ \t\n]*'
+     SYMBOL = #'[^\\'`~@\\(\\)\\[\\]{}:;#,\\^ \t\n0123456789]' #'[^\\'`~@\\(\\)\\[\\]{}:;,\\^ \t\n]*'
      SINGLE-LINE-COMMENT = <';'> #'.'* NEW-LINE 
      STRING = <'\\\"'> #'([^\"\\\\]|\\\\.)*' <'\\\"'>
      NUMBER = (INTEGER | FLOAT | FRACTION) | (SIGN (INTEGER | FLOAT | FRACTION))
@@ -42,13 +35,13 @@
      FRACTION = INTEGER <'/'> INTEGER
      DEC-INT = #'[0-9]+'
      HEX-INT = <'0'> <'x' | 'X'> #'[0-9a-fA-F]+'
-     ANY-CHAR = #'.'
      NEW-LINE = '\n' | Epsilon
      <SPACE> = <#'[ \t\n,]+'>
      <OPTIONAL-SPACE> = <#'[ \t\n,]*'>
-     "))
+     ")
 
 (defn mylisp->ast
+  "The parser"
   ([text start] (insta/parse (insta/parser (grammar) :start start) text))
   ([text] (mylisp->ast text :PROGRAM)))
 
@@ -77,10 +70,8 @@
 
 
 (defn float-fn 
-  ([v]
-    (float-fn v 0))
-  ([v1 v2]
-    (read-string (format "%s.%s" v1 v2))))
+  ([v] (float-fn v 0))
+  ([v1 v2] (read-string (format "%s.%s" v1 v2))))
 
 (defn reader-macro-fn 
   ([expr]
@@ -116,9 +107,11 @@
   )
 
 (defn ast->clj [ast]
+  "Transform an AST to Clojure"
   (insta/transform
     ast->clj-map 
     ast))
 
-(defn my-eval [text] 
+(defn my-eval [text]
+  "Evaluate an expresion"
   (->  text mylisp->ast ast->clj eval))
