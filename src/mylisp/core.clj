@@ -3,7 +3,7 @@
   (:require [instaparse.core :as insta]
             [clojure.core.match :refer [match]]))
 
-(defmacro dbg[x] `(let [x# ~x] (println (java.lang.System/currentTimeMillis) ": " '~x "=" x#) x#))
+(defmacro dbg[x] `(let [x# ~x] (println '~x "=" x#) x#))
 
 (defmulti ast->clj first) 
 
@@ -49,8 +49,7 @@
      "))
 
 (defn mylisp->ast
-  ([text start]
-    (insta/parse (insta/parser (grammar) :start start) text))
+  ([text start] (insta/parse (insta/parser (grammar) :start start) text))
   ([text] (mylisp->ast text :PROGRAM)))
 
 
@@ -72,9 +71,11 @@
 
 (defn number-fn [& args]
   (match (vec args)
-    [[:SIGN "-"] v] (- v)
-    [[:SIGN "+"] v] v
+    ["-" v] (- v)
+    ["+" v] v
     [v] v)) 
+
+
 (defn float-fn 
   ([v]
     (float-fn v 0))
@@ -96,6 +97,7 @@
    :DEC-INT read-string
    :INTEGER identity
    :NUMBER number-fn
+   :SIGN identity
    :EXPR expr-fn
    :LIST (fn [& args] `~args)
    :VECTOR (fn [& args] `~(vec args))
