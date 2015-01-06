@@ -40,10 +40,11 @@
      <OPTIONAL-SPACE> = <#'[ \t\n,]*'>
      ")
 
-(defn mylisp->ast
+(defn parser
   "The parser"
   ([text start] (insta/parse (insta/parser (grammar) :start start) text))
   ([text] (mylisp->ast text :PROGRAM)))
+
 
 
 (defn expr-fn [& args]
@@ -114,4 +115,4 @@
 
 (defn my-eval [text]
   "Evaluate an expresion"
-  (->  text mylisp->ast ast->clj eval))
+  (->  text parser ast->clj eval))
