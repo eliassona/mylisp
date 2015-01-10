@@ -16,7 +16,12 @@
   {"+" + , "-" -})
 
 (defn fn-predefined [name args env]
-  (apply (pre-def-map name) (map #(my-eval % env) args)))
+  (condp = name
+    "quote" (first args) ;TODO is first correct here
+    "unquote" (my-eval (my-eval (first args) env) env)
+    (if-let [f (pre-def-map name)]
+      (apply f (map #(my-eval % env) args))
+      (println (format "Symbol %s can't be found" name)))))
 
 (defn my-apply [[name & args] env]
   (let [n (str name)]
