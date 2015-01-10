@@ -43,7 +43,7 @@
 (defn parser
   "The parser"
   ([text start] (insta/parse (insta/parser (grammar) :start start) text))
-  ([text] (mylisp->ast text :PROGRAM)))
+  ([text] (parser text :PROGRAM)))
 
 
 
