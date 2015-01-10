@@ -113,6 +113,12 @@
     ast->clj-map 
     ast))
 
-(defn my-eval [text]
+(defn clj-eval [text]
   "Evaluate an expresion"
   (->  text parser ast->clj eval))
+
+(defn lisp-eval [expr]
+  
+  )
+
+
