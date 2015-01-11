@@ -11,9 +11,6 @@
   (assert (= (count arg-names) (count args)))
   (my-eval impl (reduce (fn [acc [n v]] (assoc acc n v)) env (partition 2 (interleave arg-names args)))))
 
-(defmacro apply-macro [name args env]
- `(~(symbol name) ~@args)
- )
 
 (def pre-def-map 
   {"+" + , "-" -, "=" =, ">" >, "<" <, "not" not})
@@ -27,6 +24,7 @@
     "or" (reduce (fn [acc b] (or acc b)) (map #(my-eval % env) args))
     "first" (first (map #(my-eval % env) (first args)))
     "rest" (rest (map #(my-eval % env) (first args)))
+    "cons" (cons (-> args first (my-eval env)) (-> args second (my-eval env)))
     (if-let [f (pre-def-map name)]
       (apply f (map #(my-eval % env) args))
       (println (format "Symbol %s can't be found" name)))))
