@@ -46,7 +46,7 @@
     (fn-app-no-arity f args env)))
 
 (def pre-def-map 
-  {"+" + , "-" -, "=" =, ">" >, "<" <, "not" not})
+  {"+" + , "-" -, "=" =, ">" >, "<" <, "not" not, "println" println})
 
 (defn fn-predefined [name args env]
   (condp = name
@@ -57,7 +57,7 @@
     "or" (reduce (fn [acc b] (or acc b)) (map #(my-eval % env) args))
     "first" (first (my-eval (first args) env))
     "rest" (rest (map #(my-eval % env) (my-eval (first args) env)))
-    "empty?" (empty? (my-eval (first args) env))
+    "empty?" (empty? (my-eval (first (dbg args)) env))
     "cons" (cons (-> args first (my-eval env)) (-> args second (my-eval env)))
     (if-let [f (pre-def-map name)]
       (apply f (map #(my-eval % env) args))
@@ -100,6 +100,7 @@
 (evl (def max (fn [v1 v2] (if (> v1 v2) v1 v2))))
 (evl (def min (fn [v1 v2] (if (< v1 v2) v1 v2))))
 (evl (def count (fn [coll] (if (empty? coll) 0 (+ (count (rest coll)) 1)))))
+(evl (def second (fn [coll] (first (rest coll)))))
 (evl (def max
   (fn 
     ([x] x)
