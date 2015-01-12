@@ -1,4 +1,5 @@
-(ns mylisp.eval)
+(ns mylisp.eval
+  (:require [clojure.repl :refer [source doc]]))
 
 (defmacro dbg [x] `(let [x# ~x] (println '~x "=" x#) x#))
 
@@ -7,10 +8,29 @@
 (defprotocol MyEval
   (my-eval [expr env]))
 
-(defn fn-app [[arg-names impl] args env]
+(defn fn-app-no-arity [[arg-names impl] args env]
   (assert (= (count arg-names) (count args)))
   (my-eval impl (reduce (fn [acc [n v]] (assoc acc n v)) env (partition 2 (interleave arg-names args)))))
 
+(defn multiple-arity? [f]
+  (-> f first list?))
+
+(defn arity [arg-names]
+  (let [n (count arg-names)]
+    (if (and (> n 1) (= (nth arg-names (- n 2)) (symbol "&")))
+      (- n 1)
+      n
+    )))
+
+(defn correct-arity? [[arg-names impl] args]
+  (= (arity arg-names) (count args))) 
+
+(defn fn-app [f args env]
+  (if (multiple-arity? f)
+    (let [x (filter #(correct-arity? % args) f)]
+      (assert (= (count x) 1))
+      (-> x first (fn-app-no-arity args env))) ;TODO when & is used the last arg must be converted to a seq
+    (fn-app-no-arity f args env)))
 
 (def pre-def-map 
   {"+" + , "-" -, "=" =, ">" >, "<" <, "not" not})
@@ -32,9 +52,9 @@
 (defn my-apply [[name & args] env]
   (let [n (str name)]
     (condp = n
-      "def" (swap! vars assoc (first args) (-> args second (my-eval env)))
+      "def" (swap! vars assoc (first args) (with-meta (-> args second (my-eval env)) {:macro (-> args rest second)}))
       "fn" args
-      (if-let [the-fn (my-eval name env)] 
+      (if-let [the-fn (dbg (my-eval name env))] 
         (fn-app the-fn args env)
         (fn-predefined n args env))
         )))
@@ -59,3 +79,10 @@
 (evl (def abs (fn [v] (if (< v 0) (- v) v))))
 (evl (def max (fn [v1 v2] (if (> v1 v2) v1 v2))))
 (evl (def min (fn [v1 v2] (if (< v1 v2) v1 v2))))
+
+(evl (def max
+  (fn 
+    ([x] x)
+    ([x y] (. clojure.lang.Numbers (max x y)))
+    ([x y & more]
+     (reduce max (max x y) more)))))
