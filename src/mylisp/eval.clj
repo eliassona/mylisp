@@ -23,13 +23,16 @@
 
 (defn args-of [arg-names args]
   (if (var-args? arg-names)
-    (dbg args) ;TODO
-    args))
+    (let [ix (- (count arg-names) 2)
+          svf #(subvec % 0 ix)]
+      [(conj (svf arg-names) (last arg-names))
+       (conj (svf args) (subvec args ix))]) 
+    [arg-names args]))
 
 (defn fn-app-no-arity [[arg-names impl] args env]
-  (let [as (args-of arg-names args)]
-    (assert (= (count arg-names) (count as)))
-    (my-eval impl (reduce (fn [acc [n v]] (assoc acc n v)) env (partition 2 (interleave arg-names as))))))
+  (let [[ans as] (args-of arg-names args)]
+    (assert (= (count ans) (count as)))
+    (my-eval impl (reduce (fn [acc [n v]] (assoc acc n v)) env (partition 2 (interleave ans as))))))
 
 
 
