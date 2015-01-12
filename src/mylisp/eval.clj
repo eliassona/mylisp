@@ -8,19 +8,30 @@
 (defprotocol MyEval
   (my-eval [expr env]))
 
-(defn fn-app-no-arity [[arg-names impl] args env]
-  (assert (= (count arg-names) (count args)))
-  (my-eval impl (reduce (fn [acc [n v]] (assoc acc n v)) env (partition 2 (interleave arg-names args)))))
-
 (defn multiple-arity? [f]
   (-> f first list?))
 
+(defn var-args? [arg-names]
+  (let [n (count arg-names)]
+    (and (> n 1) (= (nth arg-names (- n 2)) (symbol "&")))))
+
 (defn arity [arg-names]
   (let [n (count arg-names)]
-    (if (and (> n 1) (= (nth arg-names (- n 2)) (symbol "&")))
+    (if (var-args? arg-names)
       (- n 1)
-      n
-    )))
+      n)))
+
+(defn args-of [arg-names args]
+  (if (var-args? arg-names)
+    (dbg args) ;TODO
+    args))
+
+(defn fn-app-no-arity [[arg-names impl] args env]
+  (let [as (args-of arg-names args)]
+    (assert (= (count arg-names) (count as)))
+    (my-eval impl (reduce (fn [acc [n v]] (assoc acc n v)) env (partition 2 (interleave arg-names as))))))
+
+
 
 (defn correct-arity? [[arg-names impl] args]
   (= (arity arg-names) (count args))) 
@@ -29,7 +40,7 @@
   (if (multiple-arity? f)
     (let [x (filter #(correct-arity? % args) f)]
       (assert (= (count x) 1))
-      (-> x first (fn-app-no-arity args env))) ;TODO when & is used the last arg must be converted to a seq
+      (-> x first (fn-app-no-arity args env))) 
     (fn-app-no-arity f args env)))
 
 (def pre-def-map 
