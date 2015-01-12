@@ -23,18 +23,17 @@
 
 (defn args-of [arg-names args]
   (if (var-args? arg-names)
-    (let [ix (- (count arg-names) 2)
+    (let [argsv (vec args)
+          ix (- (count arg-names) 2)
           svf #(subvec % 0 ix)]
-      [(conj (svf arg-names) (last arg-names))
-       (conj (svf args) (subvec args ix))]) 
+      (dbg [(conj (svf arg-names) (last arg-names))
+            (conj (svf argsv) (subvec argsv ix))])) 
     [arg-names args]))
 
 (defn fn-app-no-arity [[arg-names impl] args env]
   (let [[ans as] (args-of arg-names args)]
     (assert (= (count ans) (count as)))
     (my-eval impl (reduce (fn [acc [n v]] (assoc acc n v)) env (partition 2 (interleave ans as))))))
-
-
 
 (defn correct-arity? [[arg-names impl] args]
   (= (arity arg-names) (count args))) 
@@ -68,7 +67,7 @@
     (condp = n
       "def" (swap! vars assoc (first args) (with-meta (-> args second (my-eval env)) {:macro (-> args rest second)}))
       "fn" args
-      (if-let [the-fn (dbg (my-eval name env))] 
+      (if-let [the-fn (my-eval name env)] 
         (fn-app the-fn args env)
         (fn-predefined n args env))
         )))
@@ -97,6 +96,6 @@
 (evl (def max
   (fn 
     ([x] x)
-    ([x y] (. clojure.lang.Numbers (max x y)))
+    ([x y] "two")
     ([x y & more]
-     (reduce max (max x y) more)))))
+     3))))
