@@ -3,7 +3,8 @@
 
 (defmacro dbg [x] `(let [x# ~x] (println '~x "=" x#) x#))
 
-(def vars (atom {}))
+(def vars (atom {'first first, 'rest rest 'empty? empty?, '+ +, '- -, 'println println}))
+
 
 (defprotocol MyEval
   (my-eval [expr env]))
@@ -57,7 +58,7 @@
     "or" (reduce (fn [acc b] (or acc b)) (map #(my-eval % env) args))
     "first" (first (my-eval (first args) env))
     "rest" (rest (map #(my-eval % env) (my-eval (first args) env)))
-    "empty?" (empty? (my-eval (first (dbg args)) env))
+    "empty?" (empty? (my-eval (first args) env))
     "cons" (cons (-> args first (my-eval env)) (-> args second (my-eval env)))
     (if-let [f (pre-def-map name)]
       (apply f (map #(my-eval % env) args))
@@ -90,6 +91,76 @@
 
 (defmacro evl [expr]
   `(my-eval '~expr {}))
+
+;;------------------------------------
+
+(defn self-eval? [expr]
+  (some #(% expr) [string? number? keyword? nil? fn?]))
+      
+(defn quoted? [[q]]
+  (= q 'quote))
+
+(defn def? [[d]]
+  (= d 'def))
+(defn if? [[i]]
+  (= i 'if))
+(defn lambda? [[l]]
+  (= l 'fn))
+
+(defmulti new-eval 
+  (fn [expr env]
+    (cond 
+      (self-eval? expr) :self
+      (symbol? expr) :symbol
+      (quoted? expr) :quoted
+      (def? expr) :def
+      (if? expr) :if
+      (lambda? expr) :lambda
+      (list? expr) :app
+    )))
+
+(defmethod new-eval :self [expr _] 
+  expr)
+
+(defmethod new-eval :symbol [expr env] 
+  (my-eval (@vars (dbg expr)) env) ) 
+
+
+(defmethod new-eval :quoted [[_ expr] _] 
+  expr)
+
+(defmethod new-eval :def [[_ sym expr] _] 
+  (swap! vars assoc sym expr))
+
+(defmethod new-eval :if [[pred alt1 alt2] env]
+  (let [e #(my-eval % env)]
+    (if (e pred) (e alt1) (e alt2))))
+(defmethod new-eval :lambda [expr _] 
+  "lambda")
+
+(defn primitive-fn? [the-fn]
+  (fn? the-fn))
+  
+(defn compound-fn? [the-fn]
+  false
+  )
+(defn apply-primitive-fn [the-fn args]
+  (apply the-fn args))
+
+(defn new-apply [the-fn args env]
+  (let [ev-args (map #(new-eval % env) args)]
+    (cond 
+      (primitive-fn? the-fn)
+      (apply-primitive-fn the-fn ev-args)
+      (compound-fn? the-fn)
+      (dbg the-fn))))
+    
+
+(defmethod new-eval :app [[the-fn & args] env]
+  (new-apply (my-eval the-fn env) args env))
+
+  
+
 
 
 ;;some standard functions
