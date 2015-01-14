@@ -3,21 +3,24 @@
 
 (defmacro dbg [x] `(let [x# ~x] (println '~x "=" x#) x#))
 
-(def vars (atom {'first first, 'rest rest 'empty? empty?, '+ +, '- -, 'println println}))
-
-
-
+(def vars (atom {'first first, 
+                 'rest rest 
+                 'empty? empty?, 
+                 '+ +, 
+                 '- -, 
+                 'println println
+                 '> >
+                 '< <
+                 '= =
+                 }))
 
 (defn with-meta-if [obj m]
   (if (instance? clojure.lang.IObj obj)
     (with-meta obj m)
     obj))
 
-;;------------------------------------
-
-
 (defn self-eval? [expr]
-  (some #(% expr) [string? number? keyword? nil? fn?]))
+  (some #(% expr) [string? number? keyword? nil? fn? (partial instance? Boolean)]))
       
 (defn quoted? [[q]]
   (= q 'quote))
@@ -47,7 +50,7 @@
 
 (defn var-args? [arg-names]
   (let [n (count arg-names)]
-    (and (> n 1) (= (nth arg-names (- n 2)) (symbol "&")))))
+    (and (> n 1) (= (nth arg-names (- n 2)) '&))))
 
 (defn arity [arg-names]
   (let [n (count arg-names)]
@@ -87,24 +90,20 @@
   (new-eval ((merge @vars env) expr) env) ) 
 
 
-(defmethod new-eval :quoted [[_ expr] _] 
-  expr)
+(defmethod new-eval :quoted [[_ expr] _] expr)
 
-(defmethod new-eval :def [[_ sym expr] _] 
-  (swap! vars assoc sym expr))
+(defmethod new-eval :def [[_ sym expr] _] (swap! vars assoc sym expr))
 
-(defmethod new-eval :if [[pred alt1 alt2] env]
+(defmethod new-eval :if [[_ pred alt1 alt2] env]
   (let [e #(new-eval % env)]
     (if (e pred) (e alt1) (e alt2))))
-(defmethod new-eval :lambda [expr _]
-  (rest expr))
 
-(defn primitive-fn? [the-fn]
-  (fn? the-fn))
+(defmethod new-eval :lambda [expr _] (rest expr))
+
+(defn primitive-fn? [the-fn] (fn? the-fn))
   
 
-(defn apply-primitive-fn [the-fn args]
-  (apply the-fn args))
+(defn apply-primitive-fn [the-fn args] (apply the-fn args))
 
 (defn new-apply [the-fn args env]
   (let [ev-args (map #(new-eval % env) args)]
@@ -118,9 +117,7 @@
 (defmethod new-eval :app [[the-fn & args] env]
   (new-apply (new-eval the-fn env) args env))
 
-  
-
-
+;;----------------------------------------------------------------------------------------------------------------------
 
 ;;some standard functions
 (comment 
