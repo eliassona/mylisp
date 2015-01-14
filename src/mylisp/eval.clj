@@ -5,7 +5,8 @@
 
 (def vars (atom {'first first, 
                  'rest rest 
-                 'empty? empty?, 
+                 'empty? empty?,
+                 'list list
                  '+ +, 
                  '- -, 
                  'println println
@@ -77,9 +78,6 @@
   (= (arity arg-names) (count args))) 
 
 (defn fn-app [f args env]
-  (dbg f)
-  (dbg args)
-  (dbg env)
   (if (multiple-arity? f)
     (let [x (filter #(correct-arity? % args) f)]
       (assert (= (count x) 1))
@@ -90,19 +88,21 @@
 (defmethod new-eval :self [expr _] 
   expr)
 
-(defmethod new-eval :symbol [expr env] 
-  (new-eval ((merge @vars env) expr) env) )  ;TODO do not eval symbol lookup
+(defmethod new-eval :symbol [expr env]
+  (let [e (merge @vars env)]
+    (assert (contains? (into #{} (keys e)) expr) (format "Unable to resolve symnbol: %s in this context" expr))
+    (e expr)))  ;TODO do not eval symbol lookup
 
 
 (defmethod new-eval :quoted [[_ expr] _] expr)
 
-(defmethod new-eval :def [[_ sym expr] _] (swap! vars assoc sym expr))
+(defmethod new-eval :def [[_ sym expr] env] (swap! vars assoc sym (new-eval expr env)))
 
 (defmethod new-eval :if [[_ pred alt1 alt2] env]
   (let [e #(new-eval % env)]
     (if (e pred) (e alt1) (e alt2))))
 
-(defmethod new-eval :lambda [expr _] (rest expr))
+(defmethod new-eval :lambda [expr _] (with-meta (rest expr) {:type :lambda}))
 
 (defn primitive-fn? [the-fn] (fn? the-fn))
   
