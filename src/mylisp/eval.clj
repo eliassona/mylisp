@@ -12,6 +12,7 @@
                  '> >
                  '< <
                  '= =
+                 'count count
                  }))
 
 (defn with-meta-if [obj m]
@@ -76,6 +77,9 @@
   (= (arity arg-names) (count args))) 
 
 (defn fn-app [f args env]
+  (dbg f)
+  (dbg args)
+  (dbg env)
   (if (multiple-arity? f)
     (let [x (filter #(correct-arity? % args) f)]
       (assert (= (count x) 1))
@@ -87,7 +91,7 @@
   expr)
 
 (defmethod new-eval :symbol [expr env] 
-  (new-eval ((merge @vars env) expr) env) ) 
+  (new-eval ((merge @vars env) expr) env) )  ;TODO do not eval symbol lookup
 
 
 (defmethod new-eval :quoted [[_ expr] _] expr)
@@ -142,10 +146,15 @@
     (+ (co (rest coll)) 1)))
   
 
-(defn rd [f val coll]
-  (if (= (count coll) 0)
-    val
-    (rd f (f val (first coll)) (rest coll))))
   
     
 )
+(new-eval 
+  '(def reduce (fn [f val coll]
+     (if (empty coll)
+       val
+       (reduce f (f val (first coll)) (rest coll))))) {})
+
+(new-eval 
+  '(def reduce (fn [f val coll]
+     (+ coll))) {})
