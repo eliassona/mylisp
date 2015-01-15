@@ -3,7 +3,7 @@
 
 (defmacro dbg [x] `(let [x# ~x] (println '~x "=" x#) x#))
 
-(def vars (atom {'first first, 
+(def global-env (atom {'first first, 
                  'rest rest 
                  'empty? empty?,
                  'list list
@@ -13,13 +13,7 @@
                  '> >
                  '< <
                  '= =
-                 'count count
                  }))
-
-(defn with-meta-if [obj m]
-  (if (instance? clojure.lang.IObj obj)
-    (with-meta obj m)
-    obj))
 
 (defn self-eval? [expr]
   (some #(% expr) [string? number? keyword? nil? fn? (partial instance? Boolean)]))
@@ -29,8 +23,10 @@
 
 (defn def? [[d]]
   (= d 'def))
+
 (defn if? [[i]]
   (= i 'if))
+
 (defn lambda? [[l]]
   (= l 'fn))
 
@@ -75,34 +71,36 @@
     (new-eval impl (reduce (fn [acc [n v]] (assoc acc n v)) env (partition 2 (interleave ans as))))))
 
 (defn correct-arity? [[arg-names impl] args]
-  (= (arity arg-names) (count args))) 
+  (let [an-n (arity arg-names)
+        a-n (count args)]
+    (if (var-args? arg-names)
+      (<= an-n a-n)
+      (= an-n a-n)))) 
 
 (defn fn-app [f args env]
   (if (multiple-arity? f)
     (let [x (filter #(correct-arity? % args) f)]
-      (assert (= (count x) 1))
+      (assert (= (count x)) 1)
       (-> x first (fn-app-no-arity args env))) 
     (fn-app-no-arity f args env)))
 
 
-(defmethod new-eval :self [expr _] 
-  expr)
+(defmethod new-eval :self [expr _] expr)
 
 (defmethod new-eval :symbol [expr env]
-  (let [e (merge @vars env)]
+  (let [e (merge @global-env env)]
     (assert (contains? (into #{} (keys e)) expr) (format "Unable to resolve symnbol: %s in this context" expr))
-    (e expr)))  ;TODO do not eval symbol lookup
-
+    (e expr)))  
 
 (defmethod new-eval :quoted [[_ expr] _] expr)
 
-(defmethod new-eval :def [[_ sym expr] env] (swap! vars assoc sym (new-eval expr env)))
+(defmethod new-eval :def [[_ sym expr] env] (swap! global-env assoc sym (new-eval expr env)))
 
 (defmethod new-eval :if [[_ pred alt1 alt2] env]
   (let [e #(new-eval % env)]
     (if (e pred) (e alt1) (e alt2))))
 
-(defmethod new-eval :lambda [expr _] (with-meta (rest expr) {:type :lambda}))
+(defmethod new-eval :lambda [expr _] (rest expr))
 
 (defn primitive-fn? [the-fn] (fn? the-fn))
   
@@ -116,15 +114,12 @@
       (apply-primitive-fn the-fn ev-args)
       :else 
       (fn-app the-fn ev-args env))))
-    
 
 (defmethod new-eval :app [[the-fn & args] env]
   (new-apply (new-eval the-fn env) args env))
 
-
 (defmacro evl [expr]
   `(new-eval '~expr {}))
-  
 
 ;;----------------------------------------------------------------------------------------------------------------------
 
@@ -133,8 +128,6 @@
 (evl (def >= (fn [v1 v2] (or (> v1 v2) (= v1 v2)))))
 (evl (def <= (fn [v1 v2] (or (< v1 v2) (= v1 v2)))))
 (evl (def abs (fn [v] (if (< v 0) (- v) v))))
-(evl (def max (fn [v1 v2] (if (> v1 v2) v1 v2))))
-(evl (def min (fn [v1 v2] (if (< v1 v2) v1 v2))))
 (evl (def count (fn [coll] (if (empty? coll) 0 (+ (count (rest coll)) 1)))))
 (evl (def second (fn [coll] (first (rest coll)))))
 (evl (def max
@@ -142,20 +135,16 @@
     ([x] x)
     ([x y] (if (> x y) x y))
     ([x y & more]
-     3))))
+     (reduce max (max x y) more)))))
+(evl (def min
+  (fn 
+    ([x] x)
+    ([x y] (if (< x y) x y))
+    ([x y & more]
+     (reduce min (min x y) more)))))
+(evl 
+  (def reduce (fn [f val coll]
+    (if (empty? coll)
+      val
+      (reduce f (f val (first coll)) (rest coll))))))
 
-
-  
-
-  
-    
-
-(new-eval 
-  '(def reduce (fn [f val coll]
-     (if (empty? coll)
-       val
-       (reduce f (f val (first coll)) (rest coll))))) {})
-
-#_(new-eval 
-  '(def reduce (fn [f val coll]
-     (+ coll))) {})
