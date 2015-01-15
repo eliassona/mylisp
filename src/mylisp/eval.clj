@@ -10,17 +10,13 @@
 (defn self-eval? [expr]
   (some #(% expr) [string? number? keyword? nil? fn? (partial instance? Boolean)]))
       
-(defn quoted? [[q]]
-  (= q 'quote))
+(defn quoted? [[q]] (= q 'quote))
 
-(defn def? [[d]]
-  (= d 'def))
+(defn def? [[d]] (= d 'def))
 
-(defn if? [[i]]
-  (= i 'if))
+(defn if? [[i]] (= i 'if))
 
-(defn lambda? [[l]]
-  (= l 'fn))
+(defn lambda? [[l]] (= l 'fn))
 
 (defmulti new-eval 
   (fn [expr env]
@@ -33,7 +29,6 @@
       (lambda? expr) :lambda
       (list? expr) :app
     )))
-
 
 (defn multiple-arity? [f]
   (-> f first list?))
@@ -76,7 +71,6 @@
       (-> x first (fn-app-no-arity args env))) 
     (fn-app-no-arity f args env)))
 
-
 (defmethod new-eval :self [expr _] expr)
 
 (defmethod new-eval :symbol [expr env]
@@ -95,7 +89,6 @@
 (defmethod new-eval :lambda [expr _] (rest expr))
 
 (defn primitive-fn? [the-fn] (fn? the-fn))
-  
 
 (defn apply-primitive-fn [the-fn args] (apply the-fn args))
 
