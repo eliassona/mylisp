@@ -121,10 +121,15 @@
 (defmethod new-eval :app [[the-fn & args] env]
   (new-apply (new-eval the-fn env) args env))
 
+
+(defmacro evl [expr]
+  `(new-eval '~expr {}))
+  
+
 ;;----------------------------------------------------------------------------------------------------------------------
 
 ;;some standard functions
-(comment 
+ 
 (evl (def >= (fn [v1 v2] (or (> v1 v2) (= v1 v2)))))
 (evl (def <= (fn [v1 v2] (or (< v1 v2) (= v1 v2)))))
 (evl (def abs (fn [v] (if (< v 0) (- v) v))))
@@ -140,21 +145,17 @@
      3))))
 
 
-(defn co [coll]
-  (if (empty? coll)
-    0
-    (+ (co (rest coll)) 1)))
   
 
   
     
-)
+
 (new-eval 
   '(def reduce (fn [f val coll]
-     (if (empty coll)
+     (if (empty? coll)
        val
        (reduce f (f val (first coll)) (rest coll))))) {})
 
-(new-eval 
+#_(new-eval 
   '(def reduce (fn [f val coll]
      (+ coll))) {})

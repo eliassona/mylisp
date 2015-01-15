@@ -1,5 +1,5 @@
 (ns mylisp.eval_test
-  (:require [mylisp.eval :refer [fn-app new-eval]]
+  (:require [mylisp.eval :refer [fn-app evl]]
             [clojure.test :refer [is deftest run-tests ]]))
 
 
@@ -14,10 +14,10 @@
   ))
 
 (deftest verify-eval 
-  (new-eval '(def a (quote (1 2 3))) {})
-  (is (= [2 3] (new-eval '(if (empty? a) (first a) (rest a)) {})))
-  (is (= "empty" (new-eval '(if (empty? (quote ())) "empty" "full") {})))
-  (is (= 1 (new-eval '(+ (first (list 1 2 3))) {})))
- (is (= 6 (new-eval '(reduce + 0 (list 1 2 3)) {})))
-  (is (= (list 2 3) (new-eval '((fn [coll] (rest coll)) (list 1 2 3)) {})))
+  (evl (def a (quote (1 2 3))))
+  (is (= [2 3] (evl (if (empty? a) (first a) (rest a)))))
+  (is (= "empty" (evl (if (empty? (quote ())) "empty" "full"))))
+  (is (= 1 (evl (+ (first (list 1 2 3))))))
+  (is (= 6 (evl (reduce + 0 (list 1 2 3)))))
+  (is (= (list 2 3) (evl ((fn [coll] (rest coll)) (list 1 2 3)))))
   )
