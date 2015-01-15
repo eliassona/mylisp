@@ -3,17 +3,9 @@
 
 (defmacro dbg [x] `(let [x# ~x] (println '~x "=" x#) x#))
 
-(def global-env (atom {'first first, 
-                 'rest rest 
-                 'empty? empty?,
-                 'list list
-                 '+ +, 
-                 '- -, 
-                 'println println
-                 '> >
-                 '< <
-                 '= =
-                 }))
+(defmacro def-map [& syms] `~(apply hash-map (mapcat (fn [v] [`'~v v]) syms)))
+  
+(def global-env (atom (def-map first rest empty? list + - < > = not println)))
 
 (defn self-eval? [expr]
   (some #(% expr) [string? number? keyword? nil? fn? (partial instance? Boolean)]))
