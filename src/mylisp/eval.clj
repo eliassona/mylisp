@@ -3,9 +3,14 @@
 
 (defmacro dbg [x] `(let [x# ~x] (println '~x "=" x#) x#))
 
+(defn with-meta-if [obj m]
+  (if (instance? clojure.lang.IObj obj)
+    (with-meta obj m)
+    obj))
+
 (defmacro def-map [& syms] `~(apply hash-map (mapcat (fn [v] [`'~v v]) syms)))
   
-(def global-env (atom (def-map first rest empty? list + - < > = not println)))
+(def global-env (atom (def-map first rest empty? list + - < > = println)))
 
 (defn self-eval? [expr]
   (some #(% expr) [string? number? keyword? nil? fn? (partial instance? Boolean)]))
@@ -115,6 +120,20 @@
 (evl (def abs (fn [v] (if (< v 0) (- v) v))))
 (evl (def count (fn [coll] (if (empty? coll) 0 (+ (count (rest coll)) 1)))))
 (evl (def second (fn [coll] (first (rest coll)))))
+(evl (def not (fn [x] (if x false true))))
+(evl (def not= (fn 
+                 ([x] false)
+                 ([x y] (not (= x y)))
+                 ([x y & more] (not (apply = x y more))))))
+
+#_(evl (def and 
+        (fn  
+          ([] true)
+          ([x] x)
+          ([x & next]
+           `(let [and# ~x]
+              (if and# (and ~@next) and#))))) :macro)
+
 (evl (def max
   (fn 
     ([x] x)
