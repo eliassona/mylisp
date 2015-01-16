@@ -7,10 +7,10 @@
 
 (deftest verify-fn-app
   (let [fn-def '(([x] x) ([x y] (if (> x y) x y)) ([x y & more] (reduce max (max x y) more)))]
-    (is (= 1 (fn-app fn-def '(1) {})))
-    (is (= 2 (fn-app fn-def '(0 2) {})))
-    (is (= 4 (fn-app fn-def '(0 2 4) {})))
-    (is (= 4 (fn-app fn-def '(0 2 4 -1) {})))
+    (is (= 1 (fn-app fn-def '(1) {} false)))
+    (is (= 2 (fn-app fn-def '(0 2) {} false)))
+    (is (= 4 (fn-app fn-def '(0 2 4) {} false)))
+    (is (= 4 (fn-app fn-def '(0 2 4 -1) {} false)))
   ))
 
 (deftest verify-eval 
