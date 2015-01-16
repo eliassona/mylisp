@@ -33,5 +33,5 @@
   (is (= '(3 (1 2 a)) (evl (syntax-quote ((unquote (+ 1 2)) (1 2 a))))))
   (is (= '(if (> 3 3) 1 0) (evl (syntax-quote (if (> (unquote (+ 1 2) ) 3) 1 0)))))
   (is (= '(def b 6) (evl (syntax-quote (def b (unquote (+ 1 2 3)))))))
- ; (is (= '(fn [x] (+ x 6)) (evl (syntax-quote (fn [x] (+ x (unquote (+ 1 2 3))))))))
+  (is (= '(fn [x] (+ x 6)) (evl (syntax-quote (fn [x] (+ x (unquote (+ 1 2 3))))))))
   )

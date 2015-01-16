@@ -40,12 +40,13 @@
     (cond 
       (self-eval? expr) :self
       (symbol? expr) (res-of :symbol sq)
+      (vector? expr) :vector 
       (quoted? expr) (res-of :quoted sq)
       (syntax-quote? expr) :syntax-quote
       (unquote? expr sq) :unquote
       (def? expr) (if sq :re-eval :def)
       (if? expr) (if sq :re-eval :if)
-      (lambda? expr) (res-of :lambda sq) ;TODO how to treat syntax quote
+      (lambda? expr) (if sq :re-eval :lambda) 
       (list? expr) (if sq :re-eval :app)
     )))
 
@@ -117,6 +118,9 @@
 
 (defmethod new-eval :re-eval [expr env _]
   (map #(new-eval % env true) expr))
+
+(defmethod new-eval :vector [expr env sq]
+  (mapv #(new-eval % env sq) expr))
 
 (defmethod new-eval :unquote [[_ expr] env _] 
   (new-eval expr env false))
