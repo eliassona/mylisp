@@ -103,7 +103,7 @@
 
 (defmethod new-eval :quoted [[_ expr] _ sq] expr)
 
-(defmethod new-eval :def [[_ sym expr] env sq] (swap! global-env assoc sym (new-eval expr env sq)))
+(defmethod new-eval :def [[_ sym expr macro] env sq] (swap! global-env assoc sym (with-meta-if (new-eval expr env sq) {:fn-type macro})))
 
 (defmethod new-eval :if [[_ pred alt1 alt2] env sq]
   (let [e #(new-eval % env sq)]
@@ -127,8 +127,12 @@
 
 (defn apply-primitive-fn [the-fn args] (apply the-fn args))
 
+(defn macro? [the-fn]
+  (= (-> the-fn meta :fn-type) :macro))
+
 (defn new-apply [the-fn args env sq]
-  (let [ev-args (map #(new-eval % env sq) args)]
+  (let [m (macro? the-fn)
+        ev-args (if m args (map #(new-eval % env sq) args))]
     (cond 
       (primitive-fn? the-fn)
       (apply-primitive-fn the-fn ev-args)
