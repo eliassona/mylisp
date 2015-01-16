@@ -132,12 +132,16 @@
 
 (defn new-apply [the-fn args env sq]
   (let [m (macro? the-fn)
-        ev-args (if m args (map #(new-eval % env sq) args))]
-    (cond 
-      (primitive-fn? the-fn)
-      (apply-primitive-fn the-fn ev-args)
-      :else 
-      (fn-app the-fn ev-args env sq))))
+        ev-args (if m args (map #(new-eval % env sq) args))
+        res (cond 
+              (primitive-fn? the-fn)
+              (apply-primitive-fn the-fn ev-args)
+              :else
+              (fn-app the-fn ev-args env sq))]
+    (if m 
+      (new-eval res env sq) ;TODO what should sq be here??
+      res)
+    ))
 
 (defmethod new-eval :app [[the-fn & args] env sq]
   (new-apply (new-eval the-fn env sq) args env sq))
@@ -185,4 +189,6 @@
     (if (empty? coll)
       val
       (reduce f (f val (first coll)) (rest coll))))))
+
+
 
