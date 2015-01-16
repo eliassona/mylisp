@@ -23,17 +23,34 @@
 
 (defn lambda? [[l]] (= l 'fn))
 
+(defn syntax-quote? [[sq]]
+  (= sq 'syntax-quote))
+
+(defn unquote? [[unquote] sq]
+  (when (= unquote 'unquote)
+    (if sq true (throw (IllegalStateException. "must be inside a syntax qoute")))))
+  
+  
+
+(defn res-of [res sq]
+  (if sq :self res))
+
 (defmulti new-eval 
   (fn [expr env sq]
     (cond 
       (self-eval? expr) :self
-      (symbol? expr) :symbol
-      (quoted? expr) :quoted
-      (def? expr) :def
-      (if? expr) :if
-      (lambda? expr) :lambda
-      (list? expr) :app
+      (symbol? expr) (res-of :symbol sq)
+      (quoted? expr) (res-of :quoted sq)
+      (syntax-quote? expr) :syntax-quote
+      (unquote? expr sq) :unquote
+      (def? expr) (if sq :re-eval :def)
+      (if? expr) (if sq :re-eval :if)
+      (lambda? expr) (res-of :lambda sq) ;TODO how to treat syntax quote
+      (list? expr) (if sq :re-eval :app)
     )))
+
+
+
 
 (defn multiple-arity? [f]
   (-> f first list?))
@@ -94,6 +111,15 @@
 (defmethod new-eval :lambda [expr _ sq] (rest expr))
 
 (defn primitive-fn? [the-fn] (fn? the-fn))
+
+(defmethod new-eval :syntax-quote [[_ expr] env _]
+  (new-eval expr env true))
+
+(defmethod new-eval :re-eval [expr env _]
+  (map #(new-eval % env true) expr))
+
+(defmethod new-eval :unquote [[_ expr] env _] 
+  (new-eval expr env false))
 
 (defn apply-primitive-fn [the-fn args] (apply the-fn args))
 
