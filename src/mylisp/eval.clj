@@ -8,7 +8,8 @@
     (with-meta obj m)
     obj))
 
-(defmacro def-map [& syms] `~(apply hash-map (mapcat (fn [v] [`'~v v]) syms)))
+
+(defmacro def-map [& syms] (apply hash-map (mapcat (fn [v] [`'~v v]) syms)))
   
 (def global-env (atom (def-map first rest empty? list + - < > = println)))
 
@@ -35,7 +36,7 @@
 (defn res-of [res sq]
   (if sq :self res))
 
-(defmulti new-eval 
+(defmulti my-eval 
   (fn [expr env sq]
     (cond 
       (self-eval? expr) :self
@@ -75,10 +76,10 @@
        (conj (svf argsv) (subvec argsv ix))]) 
     [arg-names args]))
 
-(defn fn-app-no-arity [[arg-names impl] args env sq]
+(defn fn-app-one-arity [[arg-names impl] args env sq]
   (let [[ans as] (args-of arg-names args)]
     (assert (= (count ans) (count as)))
-    (new-eval impl (reduce (fn [acc [n v]] (assoc acc n v)) env (partition 2 (interleave ans as))) sq)))
+    (my-eval impl (reduce (fn [acc [n v]] (assoc acc n v)) env (partition 2 (interleave ans as))) sq)))
 
 (defn correct-arity? [[arg-names impl] args]
   (let [an-n (arity arg-names)
@@ -91,63 +92,63 @@
   (if (multiple-arity? f)
     (let [x (filter #(correct-arity? % args) f)]
       (assert (= (count x)) 1)
-      (-> x first (fn-app-no-arity args env sq))) 
-    (fn-app-no-arity f args env sq)))
+      (-> x first (fn-app-one-arity args env sq))) 
+    (fn-app-one-arity f args env sq)))
 
-(defmethod new-eval :self [expr _ sq] expr)
+(defmethod my-eval :self [expr _ sq] expr)
 
-(defmethod new-eval :symbol [expr env sq]
+(defmethod my-eval :symbol [expr env sq]
   (let [e (merge @global-env env)]
     (assert (contains? (into #{} (keys e)) expr) (format "Unable to resolve symnbol: %s in this context" expr))
     (e expr)))  
 
-(defmethod new-eval :quoted [[_ expr] _ sq] expr)
+(defmethod my-eval :quoted [[_ expr] _ sq] expr)
 
-(defmethod new-eval :def [[_ sym expr macro] env sq] (swap! global-env assoc sym (with-meta-if (new-eval expr env sq) {:fn-type macro})))
+(defmethod my-eval :def [[_ sym expr macro] env sq] (swap! global-env assoc sym (with-meta-if (my-eval expr env sq) {:fn-type macro})))
 
-(defmethod new-eval :if [[_ pred alt1 alt2] env sq]
-  (let [e #(new-eval % env sq)]
+(defmethod my-eval :if [[_ pred alt1 alt2] env sq]
+  (let [e #(my-eval % env sq)]
     (if (e pred) (e alt1) (e alt2))))
 
-(defmethod new-eval :lambda [expr _ sq] (rest expr))
+(defmethod my-eval :lambda [expr _ sq] (rest expr))
 
 (defn primitive-fn? [the-fn] (fn? the-fn))
 
-(defmethod new-eval :syntax-quote [[_ expr] env _]
-  (new-eval expr env true))
+(defmethod my-eval :syntax-quote [[_ expr] env _]
+  (my-eval expr env true))
 
-(defmethod new-eval :re-eval [expr env _]
-  (map #(new-eval % env true) expr))
+(defmethod my-eval :re-eval [expr env _]
+  (map #(my-eval % env true) expr))
 
-(defmethod new-eval :vector [expr env sq]
-  (mapv #(new-eval % env sq) expr))
+(defmethod my-eval :vector [expr env sq]
+  (mapv #(my-eval % env sq) expr))
 
-(defmethod new-eval :unquote [[_ expr] env _] 
-  (new-eval expr env false))
+(defmethod my-eval :unquote [[_ expr] env _] 
+  (my-eval expr env false))
 
 (defn apply-primitive-fn [the-fn args] (apply the-fn args))
 
 (defn macro? [the-fn]
   (= (-> the-fn meta :fn-type) :macro))
 
-(defn new-apply [the-fn args env sq]
+(defn my-apply [the-fn args env sq]
   (let [m (macro? the-fn)
-        ev-args (if m args (map #(new-eval % env sq) args))
+        ev-args (if m args (map #(my-eval % env sq) args))
         res (cond 
               (primitive-fn? the-fn)
               (apply-primitive-fn the-fn ev-args)
               :else
               (fn-app the-fn ev-args env sq))]
     (if m 
-      (new-eval res env sq) ;TODO what should sq be here??
+      (my-eval res env sq) ;TODO what should sq be here??
       res)
     ))
 
-(defmethod new-eval :app [[the-fn & args] env sq]
-  (new-apply (new-eval the-fn env sq) args env sq))
+(defmethod my-eval :app [[the-fn & args] env sq]
+  (my-apply (my-eval the-fn env sq) args env sq))
 
 (defmacro evl [expr]
-  `(new-eval '~expr {} false))
+  `(my-eval '~expr {} false))
 
 ;;----------------------------------------------------------------------------------------------------------------------
 
