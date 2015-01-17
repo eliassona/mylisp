@@ -1,8 +1,6 @@
 (ns mylisp.eval
   (:require [clojure.repl :refer [source doc]]))
 
-(defmacro dbg [x] `(let [x# ~x] (println '~x "=" x#) x#))
-
 (defn with-meta-if [obj m]
   (if (instance? clojure.lang.IObj obj)
     (with-meta obj m)
@@ -12,8 +10,7 @@
   
 (def global-env (atom (def-map first rest empty? list + - < > = println)))
 
-(defn self-eval? [expr]
-  (some #(% expr) [string? number? keyword? nil? fn? (partial instance? Boolean)]))
+(defn self-eval? [expr] (some #(% expr) [string? number? keyword? nil? fn? (partial instance? Boolean)]))
       
 (defn quoted? [[q]] (= q 'quote))
 
@@ -23,8 +20,7 @@
 
 (defn lambda? [[l]] (= l 'fn))
 
-(defn syntax-quote? [[sq]]
-  (= sq 'syntax-quote))
+(defn syntax-quote? [[sq]] (= sq 'syntax-quote))
 
 (defn unquote? [[unquote] sq]
   (when (= unquote 'unquote)
@@ -104,22 +100,17 @@
 
 (defn primitive-fn? [the-fn] (fn? the-fn))
 
-(defmethod my-eval :syntax-quote [[_ expr] env _]
-  (my-eval expr env true))
+(defmethod my-eval :syntax-quote [[_ expr] env _] (my-eval expr env true))
 
-(defmethod my-eval :re-eval [expr env _]
-  (map #(my-eval % env true) expr))
+(defmethod my-eval :re-eval [expr env _] (map #(my-eval % env true) expr))
 
-(defmethod my-eval :vector [expr env sq]
-  (mapv #(my-eval % env sq) expr))
+(defmethod my-eval :vector [expr env sq] (mapv #(my-eval % env sq) expr))
 
-(defmethod my-eval :unquote [[_ expr] env _] 
-  (my-eval expr env false))
+(defmethod my-eval :unquote [[_ expr] env _]  (my-eval expr env false))
 
 (defn apply-primitive-fn [the-fn args] (apply the-fn args))
 
-(defn macro? [the-fn]
-  (= (-> the-fn meta :fn-type) :macro))
+(defn macro? [the-fn] (= (-> the-fn meta :fn-type) :macro))
 
 (defn my-apply [the-fn args env sq]
   (let [m (macro? the-fn)
@@ -129,14 +120,11 @@
               (fn-app the-fn ev-args env sq))]
     (if m 
       (my-eval res env sq) ;TODO what should sq be here??
-      res)
-    ))
+      res)))
 
-(defmethod my-eval :app [[the-fn & args] env sq]
-  (my-apply (my-eval the-fn env sq) args env sq))
+(defmethod my-eval :app [[the-fn & args] env sq] (my-apply (my-eval the-fn env sq) args env sq))
 
-(defmacro evl [expr]
-  `(my-eval '~expr {} false))
+(defmacro evl [expr] `(my-eval '~expr {} false))
 
 ;;----------------------------------------------------------------------------------------------------------------------
 
