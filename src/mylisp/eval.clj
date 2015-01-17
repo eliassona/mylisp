@@ -26,7 +26,7 @@
   (when (= unquote 'unquote)
     (if sq true (throw (IllegalStateException. "must be inside a syntax qoute")))))
 
-(defmulti my-eval 
+(defmulti eval-expr 
   (fn [expr env sq]
     (cond 
       (self-eval? expr) :self
@@ -65,7 +65,7 @@
 (defn fn-app-one-arity [[arg-names impl] args env sq]
   (let [[ans as] (args-of arg-names args)]
     (assert (= (count ans) (count as)))
-    (my-eval impl (reduce (fn [acc [n v]] (assoc acc n v)) env (partition 2 (interleave ans as))) sq)))
+    (eval-expr impl (reduce (fn [acc [n v]] (assoc acc n v)) env (partition 2 (interleave ans as))) sq)))
 
 (defn correct-arity? [[arg-names impl] args]
   (let [an-n (arity arg-names)
@@ -81,50 +81,50 @@
       (-> x first (fn-app-one-arity args env sq))) 
     (fn-app-one-arity f args env sq)))
 
-(defmethod my-eval :self [expr _ sq] expr)
+(defmethod eval-expr :self [expr _ sq] expr)
 
-(defmethod my-eval :symbol [expr env sq]
+(defmethod eval-expr :symbol [expr env sq]
   (let [e (merge @global-env env)]
     (assert (contains? (into #{} (keys e)) expr) (format "Unable to resolve symnbol: %s in this context" expr))
     (e expr)))  
 
-(defmethod my-eval :quoted [[_ expr] _ sq] expr)
+(defmethod eval-expr :quoted [[_ expr] _ sq] expr)
 
-(defmethod my-eval :def [[_ sym expr macro] env sq] (swap! global-env assoc sym (with-meta-if (my-eval expr env sq) {:fn-type macro})))
+(defmethod eval-expr :def [[_ sym expr macro] env sq] (swap! global-env assoc sym (with-meta-if (eval-expr expr env sq) {:fn-type macro})))
 
-(defmethod my-eval :if [[_ pred alt1 alt2] env sq]
-  (let [e #(my-eval % env sq)]
+(defmethod eval-expr :if [[_ pred alt1 alt2] env sq]
+  (let [e #(eval-expr % env sq)]
     (if (e pred) (e alt1) (e alt2))))
 
-(defmethod my-eval :lambda [expr _ sq] (rest expr))
+(defmethod eval-expr :lambda [expr _ sq] (rest expr))
 
 (defn primitive-fn? [the-fn] (fn? the-fn))
 
-(defmethod my-eval :syntax-quote [[_ expr] env _] (my-eval expr env true))
+(defmethod eval-expr :syntax-quote [[_ expr] env _] (eval-expr expr env true))
 
-(defmethod my-eval :re-eval [expr env _] (map #(my-eval % env true) expr))
+(defmethod eval-expr :re-eval [expr env _] (map #(eval-expr % env true) expr))
 
-(defmethod my-eval :vector [expr env sq] (mapv #(my-eval % env sq) expr))
+(defmethod eval-expr :vector [expr env sq] (mapv #(eval-expr % env sq) expr))
 
-(defmethod my-eval :unquote [[_ expr] env _]  (my-eval expr env false))
+(defmethod eval-expr :unquote [[_ expr] env _]  (eval-expr expr env false))
 
 (defn apply-primitive-fn [the-fn args] (apply the-fn args))
 
 (defn macro? [the-fn] (= (-> the-fn meta :fn-type) :macro))
 
-(defn my-apply [the-fn args env sq]
+(defn apply-fn [the-fn args env sq]
   (let [m (macro? the-fn)
-        ev-args (if m args (map #(my-eval % env sq) args))
+        ev-args (if m args (map #(eval-expr % env sq) args))
         res (if (primitive-fn? the-fn)
               (apply-primitive-fn the-fn ev-args)
               (fn-app the-fn ev-args env sq))]
     (if m 
-      (my-eval res env sq) ;TODO what should sq be here??
+      (eval-expr res env sq) ;TODO what should sq be here??
       res)))
 
-(defmethod my-eval :app [[the-fn & args] env sq] (my-apply (my-eval the-fn env sq) args env sq))
+(defmethod eval-expr :app [[the-fn & args] env sq] (apply-fn (eval-expr the-fn env sq) args env sq))
 
-(defmacro evl [expr] `(my-eval '~expr {} false))
+(defmacro evl [expr] `(eval-expr '~expr {} false))
 
 ;;----------------------------------------------------------------------------------------------------------------------
 
