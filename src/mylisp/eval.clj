@@ -8,7 +8,6 @@
     (with-meta obj m)
     obj))
 
-
 (defmacro def-map [& syms] (apply hash-map (mapcat (fn [v] [`'~v v]) syms)))
   
 (def global-env (atom (def-map first rest empty? list + - < > = println)))
@@ -30,19 +29,14 @@
 (defn unquote? [[unquote] sq]
   (when (= unquote 'unquote)
     (if sq true (throw (IllegalStateException. "must be inside a syntax qoute")))))
-  
-  
-
-(defn res-of [res sq]
-  (if sq :self res))
 
 (defmulti my-eval 
   (fn [expr env sq]
     (cond 
       (self-eval? expr) :self
-      (symbol? expr) (res-of :symbol sq)
+      (symbol? expr) (if sq :self :symbol)
       (vector? expr) :vector 
-      (quoted? expr) (res-of :quoted sq)
+      (quoted? expr) (if sq :self :quoted)
       (syntax-quote? expr) :syntax-quote
       (unquote? expr sq) :unquote
       (def? expr) (if sq :re-eval :def)
@@ -51,11 +45,7 @@
       (list? expr) (if sq :re-eval :app)
     )))
 
-
-
-
-(defn multiple-arity? [f]
-  (-> f first list?))
+(defn multiple-arity? [f] (-> f first list?))
 
 (defn var-args? [arg-names]
   (let [n (count arg-names)]
@@ -134,10 +124,8 @@
 (defn my-apply [the-fn args env sq]
   (let [m (macro? the-fn)
         ev-args (if m args (map #(my-eval % env sq) args))
-        res (cond 
-              (primitive-fn? the-fn)
+        res (if (primitive-fn? the-fn)
               (apply-primitive-fn the-fn ev-args)
-              :else
               (fn-app the-fn ev-args env sq))]
     (if m 
       (my-eval res env sq) ;TODO what should sq be here??
