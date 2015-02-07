@@ -1,6 +1,8 @@
 (ns mylisp.eval
   (:require [clojure.repl :refer [source doc]]))
 
+(defmacro dbg[x] `(let [x# ~x] (println (java.lang.System/currentTimeMillis) ": " '~x "=" x#) x#))
+
 (defn with-meta-if [obj m]
   (if (instance? clojure.lang.IObj obj)
     (with-meta obj m)
@@ -8,7 +10,7 @@
 
 (defmacro def-map [& syms] (apply hash-map (mapcat (fn [v] [`'~v v]) syms)))
   
-(def global-env (atom (def-map first rest empty? list + - < > = println)))
+(def global-env (atom (def-map first rest empty? cons list + - < > = println)))
 
 (defn self-eval? [expr] (some #(% expr) [string? number? keyword? nil? fn? (partial instance? Boolean)]))
       
@@ -149,6 +151,25 @@
            `(let [and# ~x]
               (if and# (and ~@next) and#))))) :macro)
 
+(evl (def when (fn [pred alt] (syntax-quote (if (unquote pred) (unquote alt) nil))) :macro))
+
+(evl 
+  (def partition (fn [coll]
+    (when (not (empty? coll))
+      (if (empty? (rest (rest coll)))
+        (cons [(first coll) (second coll)] (rest (rest coll)))
+        (cons [(first coll) (second coll)] (partition (rest (rest coll)))))))
+      ))
+
+(evl 
+  (def let1 (fn [pairs body]
+              (when (not (empty? pairs))
+                  (syntax-quote ((fn [(unquote (first (first pairs)))] (unquote (if (empty? (rest pairs)) body (let1 (rest pairs) body)))) (unquote (second (first pairs)))))))))
+(evl 
+  (def let (fn [assignments body]
+    (let1 (partition assignments) body)) :macro))
+
+
 (evl (def max
   (fn 
     ([x] x)
@@ -168,4 +189,29 @@
       (reduce f (f val (first coll)) (rest coll))))))
 
 
+
+
+#_(evl 
+   (let [a 1
+         b (+ a 1)]
+     (+ a b)))
+
+(defn let2 [pairs body]
+  (when (seq pairs)
+    (let [[s v] (first pairs)]
+      `((fn [~s] ~(if (seq (rest pairs)) (let2 (rest pairs) body) body)) ~v)
+    )))
+
+(defmacro let1 [assignments body]
+  (let2 (partition 2 assignments) body))
+
+
+(defn part [coll]
+  (when (seq coll)
+    (let [n (-> coll rest rest)
+          p [(first coll) (second coll)]]
+      (if (seq n)
+        (cons p (part n))
+        (cons p n))))
+    )
 
