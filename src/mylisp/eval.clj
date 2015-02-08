@@ -1,8 +1,6 @@
 (ns mylisp.eval
   (:require [clojure.repl :refer [source doc]]))
 
-
-
 (defmacro dbg[x] `(let [x# ~x] (println  '~x "=" x#) x#))
 
 (defn with-meta-if [obj m]
@@ -190,35 +188,3 @@
     (if (empty? coll)
       val
       (reduce f (f val (first coll)) (rest coll))))))
-
-
-
-
-#_(evl 
-   (let [a 1
-         b (+ a 1)]
-     (+ a b)))
-
-(defn let2 [pairs body]
-  (when (seq pairs)
-    (let [[s v] (first pairs)]
-      `((fn [~s] ~(if (seq (rest pairs)) (let2 (rest pairs) body) body)) ~v)
-    )))
-
-(defmacro let1 [assignments body]
-  (let2 (partition 2 assignments) body))
-
-
-
-(defn part [coll]
-  (when (seq coll)
-    (let [n (-> coll rest rest)
-          p [(first coll) (second coll)]]
-      (if (seq n)
-        (cons p (part n))
-        (cons p n))))
-    )
-
-
-(defmacro asdf [a]
-  `(println ~a))
