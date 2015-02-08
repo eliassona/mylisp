@@ -1,6 +1,8 @@
 (ns mylisp.eval
   (:require [clojure.repl :refer [source doc]]))
 
+
+
 (defmacro dbg[x] `(let [x# ~x] (println  '~x "=" x#) x#))
 
 (defn with-meta-if [obj m]
@@ -161,7 +163,7 @@
         (cons [(first coll) (second coll)] (partition (rest (rest coll)))))))
       ))
 
-(evl (def dbg (fn [x] (syntax-quote  (println (quote x) "=" (unquote x)))) :macro))
+(evl (def dbg (fn [x] (syntax-quote  (println (unquote x) "=" (unquote x)))) :macro))
 
 (evl 
   (def let1 (fn [pairs body]
