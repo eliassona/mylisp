@@ -14,6 +14,7 @@ The first 130 lines contains the interpreter. The following lines uses the inter
 The code of the interpreter here 
 [https://github.com/eliassona/mylisp/blob/master/src/mylisp/eval.clj]
 
+I implemented this interpreter only because I wanted to understand the eval/apply of Lisp not because it is useable in any way (it is not). 
 
 Below are some examples.
 
