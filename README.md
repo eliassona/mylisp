@@ -7,19 +7,13 @@ How can something so small be so powerful?
 Naturally I had to implement a Lisp interpreter myself. This way I'll hopefully understand why it's so powerful.
 
 I especially like the macro part. It's just an extra condition in apply. By adding this condition you get a macro system!!
-The code is [here https://github.com/eliassona/mylisp/blob/master/src/mylisp/eval.clj]
+The code is here [ https://github.com/eliassona/mylisp/blob/master/src/mylisp/eval.clj]
 
-The first 130 lines contains the interpreter. The following lines calls the interpreter to build an environment for the interpreter. Adding standard function and macros such as reduce etc. 
+The first 130 lines contains the interpreter. The following lines uses the interpreter to build an environment for the interpreter. Adding standard function and macros such as reduce etc. 
 
-Line 31 to 44 contains the main case statement of the eval function
-
-Line 46 - 80 deals with multiple arity
-
-Line 86 to 129 is the implementation of eval/apply
-
-Line 123 is the condition for macros
 
 Below are some examples.
+
 The main function of the interpreter is called 
 ```clojure 
 evl
