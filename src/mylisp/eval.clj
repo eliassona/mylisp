@@ -1,7 +1,7 @@
 (ns mylisp.eval
   (:require [clojure.repl :refer [source doc]]))
 
-(defmacro dbg[x] `(let [x# ~x] (println (java.lang.System/currentTimeMillis) ": " '~x "=" x#) x#))
+(defmacro dbg[x] `(let [x# ~x] (println  '~x "=" x#) x#))
 
 (defn with-meta-if [obj m]
   (if (instance? clojure.lang.IObj obj)
@@ -40,8 +40,8 @@
       (def? expr) (if sq :re-eval :def)
       (if? expr) (if sq :re-eval :if)
       (lambda? expr) (if sq :re-eval :lambda) 
-      (list? expr) (if sq :re-eval :app)
-    )))
+      (seq? expr) (if sq :re-eval :app)
+      )))
 
 (defn multiple-arity? [f] (-> f first list?))
 
@@ -117,10 +117,10 @@
 (defn apply-fn [the-fn args env sq]
   (let [m (macro? the-fn)
         ev-args (if m args (map #(eval-expr % env sq) args))
-        res (if (primitive-fn? the-fn)
-              (apply-primitive-fn the-fn ev-args)
-              (fn-app the-fn ev-args env sq))]
-    (if m 
+        res  (if (primitive-fn? the-fn)
+               (apply-primitive-fn the-fn ev-args)
+               (fn-app the-fn ev-args env sq))]
+    (if m
       (eval-expr res env sq) ;TODO what should sq be here??
       res)))
 
@@ -161,6 +161,8 @@
         (cons [(first coll) (second coll)] (partition (rest (rest coll)))))))
       ))
 
+(evl (def dbg (fn [x] (syntax-quote  (println (quote x) "=" (unquote x)))) :macro))
+
 (evl 
   (def let1 (fn [pairs body]
               (when (not (empty? pairs))
@@ -168,7 +170,6 @@
 (evl 
   (def let (fn [assignments body]
     (let1 (partition assignments) body)) :macro))
-
 
 (evl (def max
   (fn 
@@ -206,6 +207,7 @@
   (let2 (partition 2 assignments) body))
 
 
+
 (defn part [coll]
   (when (seq coll)
     (let [n (-> coll rest rest)
@@ -215,3 +217,6 @@
         (cons p n))))
     )
 
+
+(defmacro asdf [a]
+  `(println ~a))
