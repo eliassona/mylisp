@@ -9,12 +9,13 @@ Naturally I had to implement a Lisp interpreter myself. This way I'll hopefully 
 I especially like the macro part. It's just an extra condition of apply. By adding this condition you get a macro system!!
 
 
-The first 130 lines contains the interpreter. The following lines uses the interpreter to build an environment for the interpreter. Adding standard function and macros such as reduce etc. 
+The first 130 lines contains the interpreter. The following lines uses the interpreter to build an environment for the interpreter. Adding standard functions and macros such as reduce etc. 
 
 The code of the interpreter here 
 [https://github.com/eliassona/mylisp/blob/master/src/mylisp/eval.clj]
 
 I implemented this interpreter only because I wanted to understand the eval/apply of Lisp not because it is useable in any way (it is not). 
+
 
 Below are some examples.
 
