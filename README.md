@@ -12,42 +12,48 @@ I especially like the macro part. It's just an extra condition in apply. By addi
 Below are some examples.
 The main function of the interpreter is called evl.
 
+```clojure
 (use 'mylisp.eval)
-
+```clojure
 (evl (+ 1 1))
-
+```
 2
 
 ;define a value
-
+```clojure
 (evl (def a 1))
-
+```
 nil
 
+```clojure
 (evl a)
-
+```
 1
 
 
 ;define a function
 
+```clojure
 (evl (def a-fn (fn [x] (+ x 1)))) 
-
+```
 nil
 
+```clojure
 (evl (a-fn 1))
 
 2
+```
 
 ;let is implemented as a macro using lambda
 
+```clojure
 (evl 
   (let [a 1
         b 2]
  (+ a b)))
-
+ 
 3 
-
+```
 
 
 
