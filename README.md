@@ -10,7 +10,10 @@ I especially like the macro part. It's just an extra condition in apply. By addi
 
 
 Below are some examples.
-The main function of the interpreter is called ```clojure evl```.
+The main function of the interpreter is called 
+```clojure 
+evl
+```
 
 ```clojure
 (use 'mylisp.eval)
