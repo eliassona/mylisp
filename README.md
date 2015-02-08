@@ -10,7 +10,7 @@ I especially like the macro part. It's just an extra condition in apply. By addi
 
 
 Below are some examples.
-The main function of the interpreter is called evl.
+The main function of the interpreter is called ```clojure evl```.
 
 ```clojure
 (use 'mylisp.eval)
@@ -18,7 +18,7 @@ The main function of the interpreter is called evl.
 2
 ```
 
-;define a value
+Define a value
 ```clojure
 (evl (def a 1))
 nil
@@ -29,26 +29,23 @@ nil
 1
 ```
 
-
-;define a function
-
+Define a function
 ```clojure
 (evl (def a-fn (fn [x] (+ x 1)))) 
 nil
 ```
 
+Call the function
 ```clojure
 (evl (a-fn 1))
 2
 ```
 
-;let is implemented as a macro using lambda
-
+let is implemented as a macro using lambda
 ```clojure
 (evl 
   (let [a 1
         b 2]
  (+ a b)))
- 
 3 
 ```
