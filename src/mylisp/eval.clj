@@ -24,9 +24,14 @@
 
 (defn syntax-quote? [[sq]] (= sq 'syntax-quote))
 
+(defn do? [[d]] (= d 'do)) 
+
 (defn unquote? [[unquote] sq]
   (when (= unquote 'unquote)
     (if sq true (throw (IllegalStateException. "must be inside a syntax qoute")))))
+
+(defn re-eval-of [sq kw]
+  (if sq :re-eval kw))
 
 (defmulti eval-expr 
   (fn [expr env sq]
@@ -37,10 +42,11 @@
       (quoted? expr) (if sq :self :quoted)
       (syntax-quote? expr) :syntax-quote
       (unquote? expr sq) :unquote
-      (def? expr) (if sq :re-eval :def)
-      (if? expr) (if sq :re-eval :if)
-      (lambda? expr) (if sq :re-eval :lambda) 
-      (seq? expr) (if sq :re-eval :app)
+      (def? expr) (re-eval-of sq :def) 
+      (if? expr) (re-eval-of sq :if)
+      (do? expr) (re-eval-of sq :do)
+      (lambda? expr) (re-eval-of sq :lambda) 
+      (seq? expr) (re-eval-of sq :app)
       )))
 
 (defn multiple-arity? [f] (-> f first list?))
@@ -125,6 +131,11 @@
       res)))
 
 (defmethod eval-expr :app [[the-fn & args] env sq] (apply-fn (eval-expr the-fn env sq) args env sq))
+
+
+(defmethod eval-expr :do [[_ & exprs] env sq] 
+  (doseq [expr (butlast exprs)] (eval-expr expr env sq))
+  (when-let [l (last exprs)] (eval-expr l env sq)))
 
 (defmacro evl [expr] `(eval-expr '~expr {} false))
 

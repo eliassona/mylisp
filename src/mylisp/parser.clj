@@ -1,4 +1,4 @@
-(ns mylisp.core
+(ns mylisp.parser
   (:use [clojure.pprint])
   (:require [instaparse.core :as insta]
             [clojure.core.match :refer [match]]))
