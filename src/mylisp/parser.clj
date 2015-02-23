@@ -53,10 +53,11 @@
 	     [[:SPECIAL-CHARS [sc]] expr]
        (condp = sc
          :QUOTE `'~expr
-         :UNQUOTE `(unquote ~expr)
+         :UNQUOTE `(~'unquote ~expr)
          :UNQUOTE-SPLICING `(unquote-splicing ~expr)
          :DEREF `(deref ~expr)
-         :SYNTAX-QUOTE (read-string (str "`" (pr-str expr)))
+         :SYNTAX-QUOTE `(~'syntax-quote ~expr) 
+         ;(read-string (str "`" (pr-str expr)))
          )
        [v c]
        v

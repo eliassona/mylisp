@@ -104,7 +104,7 @@
   (let [e #(eval-expr % env sq)]
     (if (e pred) (e alt1) (e alt2))))
 
-(defmethod eval-expr :lambda [expr _ sq] (rest expr))
+(defmethod eval-expr :lambda [[_ & the-fn] _ _] the-fn)
 
 (defn primitive-fn? [the-fn] (fn? the-fn))
 
