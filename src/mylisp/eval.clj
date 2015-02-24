@@ -98,7 +98,7 @@
 
 (defmethod eval-expr :quoted [[_ expr] _ sq] expr)
 
-(defmethod eval-expr :def [[_ sym expr macro] env sq] (swap! global-env assoc sym (with-meta-if (eval-expr expr env sq) {:fn-type macro})))
+(defmethod eval-expr :def [[_ sym expr macro] env sq] (swap! global-env assoc sym (with-meta-if (eval-expr expr env sq) {:fn-type macro})) nil)
 
 (defmethod eval-expr :if [[_ pred alt1 alt2] env sq]
   (let [e #(eval-expr % env sq)]

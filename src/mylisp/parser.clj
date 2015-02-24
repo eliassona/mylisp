@@ -8,7 +8,7 @@
 (defn grammar []
      "
      PROGRAM = EXPR*  
-     EXPR = OPTIONAL-SPACE (SINGLE-LINE-COMMENT / NUMBER / (STRING |  LIST | VECTOR | MAP | SYMBOL | KEYWORD | (READER-MACRO | (SPECIAL-CHARS EXPR))))
+     EXPR = OPTIONAL-SPACE (SINGLE-LINE-COMMENT / NUMBER / STRING  / (LIST | VECTOR | MAP | SYMBOL | KEYWORD | (READER-MACRO | (SPECIAL-CHARS EXPR))))
      SPECIAL-CHARS = QUOTE | UNQUOTE | UNQUOTE-SPLICING | DEREF | SYNTAX-QUOTE
      UNQUOTE = <'~'>
      UNQUOTE-SPLICING = <'~@'>
@@ -86,7 +86,13 @@
       `(comment ~expr))))
 
 (def ast->clj-map 
-  {:SYMBOL (fn [& args] (-> str (apply args) symbol)) 
+  {:SYMBOL (fn [& args] (let [s (-> str (apply args) symbol)]
+                          (condp = s
+                            (symbol "nil") nil
+                            (symbol "false") false
+                            (symbol "true") true
+                            s)
+                          ) )
    :DEC-INT read-string
    :INTEGER identity
    :NUMBER number-fn
