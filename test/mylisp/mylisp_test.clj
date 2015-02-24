@@ -65,3 +65,10 @@
   (is (= 2 (evaluate "((fn ([x] x) ([x y] (+ x y)) ([x y z] (+ x y z))) 1 1)")))
   (is (= 3 (evaluate "((fn ([x] x) ([x y] (+ x y)) ([x y z] (+ x y z))) 1 1 1)")))
   )
+
+(deftest verify-vararg
+  (is (= 1 (evaluate "((fn ([x] x) ([x y] (+ x y)) ([x y & more] (+ x y (reduce + 0 more)))) 1)")))
+  (is (= 2 (evaluate "((fn ([x] x) ([x y] (+ x y)) ([x y & more] (+ x y (reduce + 0 more)))) 1 1)")))
+  (is (= 3 (evaluate "((fn ([x] x) ([x y] (+ x y)) ([x y & more] (+ x y (reduce + 0 more)))) 1 1 1)")))
+  (is (= 4 (evaluate "((fn ([x] x) ([x y] (+ x y)) ([x y & more] (+ x y (reduce + 0 more)))) 1 1 1 1)")))
+  )
