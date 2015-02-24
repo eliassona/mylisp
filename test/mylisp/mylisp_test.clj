@@ -59,3 +59,9 @@
   (is (= '(1 3) (evaluate "`(1 ~(+ 1 2))")))
   (is (= '(1 5) (evaluate "`(1 ~(+ 1 2 `~(max 1 2)))")))
 )
+
+(deftest verify-arity
+  (is (= 1 (evaluate "((fn ([x] x) ([x y] (+ x y)) ([x y z] (+ x y z))) 1)")))
+  (is (= 2 (evaluate "((fn ([x] x) ([x y] (+ x y)) ([x y z] (+ x y z))) 1 1)")))
+  (is (= 3 (evaluate "((fn ([x] x) ([x y] (+ x y)) ([x y z] (+ x y z))) 1 1 1)")))
+  )
