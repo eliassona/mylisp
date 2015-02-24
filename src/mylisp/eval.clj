@@ -49,7 +49,7 @@
       (seq? expr) (re-eval-of sq :app)
       )))
 
-(defn multiple-arity? [f] (-> f first list?))
+(defn multiple-arity? [f] (-> f first seq?))
 
 (defn var-args? [arg-names]
   (let [n (count arg-names)]
