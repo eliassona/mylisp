@@ -37,3 +37,25 @@
   (is (= 3 (evaluate "(do 1 2 (+ 1 2))")))
   )
 
+(deftest verify-vector 
+  (is (= [] (evaluate "[]")))
+  (is (= [1] (evaluate "[1]")))
+  (is (= [1 "a str" :abc 3 [2]] (evaluate "[1 \"a str\" :abc (+ 1 2) [(- 4 2)]]")))
+  )
+
+(deftest verify-lambda
+  (is (= '([x] (+ x 1)) (evaluate "(fn [x] (+ x 1))")))
+  (is (= 11 (evaluate "((fn [x] (+ x 1)) 10)")))
+  )
+
+(deftest verify-quote 
+  (is (= 1 (evaluate "'1")))
+  (is (= '(1) (evaluate "'(1)")))
+  (is (= '(1 (+ 1 2)) (evaluate "'(1 (+ 1 2))")))
+  )
+
+(deftest verify-syntax-quote
+  (is (= '(1 (+ 1 2)) (evaluate "`(1 (+ 1 2))")))
+  (is (= '(1 3) (evaluate "`(1 ~(+ 1 2))")))
+  (is (= '(1 5) (evaluate "`(1 ~(+ 1 2 `~(max 1 2)))")))
+)
