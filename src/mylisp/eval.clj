@@ -172,7 +172,7 @@
         (cons [(first coll) (second coll)] (partition (rest (rest coll)))))))
       ))
 
-(evl (def dbg (fn [x] (syntax-quote  (println (unquote x) "=" (unquote x)))) :macro))
+(evl (def dbg (fn [x] (syntax-quote  (println (quote (unquote x)) "=" (unquote x)))) :macro))
 
 (evl 
   (def let1 (fn [pairs body]

@@ -3,10 +3,10 @@
             [clojure.test :refer [run-tests is deftest]])
             )
 
-
-
 (deftest verify-self
   (is (= 1 (evaluate "1")))
+  (is (= 1 (evaluate "0x1")))
+  (is (= 255 (evaluate "0xff")))
   (is (= "a str" (evaluate "\"a str\"")))
   (is (= :keyword (evaluate ":keyword")))
   (is (= 1.23 (evaluate "1.23")))
@@ -74,5 +74,7 @@
   )
 
 (deftest verify-macros
-  
+  (evaluate "(def xyz 99)")
+  (evaluate "(def dbg1 (fn [x] `(let [x1 ~x] ['~x x1])) :macro)")
+  (is (= ['xyz 99] (evaluate "(dbg1 xyz)")))
   )
