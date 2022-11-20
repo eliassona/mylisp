@@ -143,44 +143,34 @@
    }
   )
 
-(defn index-pairs-of [text]
+(defn exprs-of [text]
   (let [ast (expr-info-parser text)
         a (atom [])
         m (expr-info-map a)
         failure (insta/failure? ast)]
     (insta/transform m ast)
-    (with-meta 
-      (if failure 
-        (butlast @a) 
-        @a) {:failure failure})))
+    (let [result (into #{} (map (fn [[ix0 ix1]] [(read-string (.substring text ix0 ix1)) [ix0 ix1]]) (if failure (butlast @a) @a)))]
+      (with-meta 
+        result {:failure failure}))))
 
-(defn index-pair-of [expr-index-pairs index]
+(defn expr-of [expr-index-pairs index]
    (with-meta 
      (reduce 
-       (fn [[prev-start-ix prev-end-ix] [new-start-ix new-end-ix]]
+       (fn [[prev-expr [prev-start-ix prev-end-ix]] [new-expr [new-start-ix new-end-ix]]]
          (if (and 
                (and 
                  (>= index new-start-ix)
                  (<= index new-end-ix))
                (< (- new-end-ix new-start-ix) 
                   (- prev-end-ix prev-start-ix)))
-           [new-start-ix new-end-ix]
-           [prev-start-ix prev-end-ix]))
+           [new-expr [new-start-ix new-end-ix]]
+           [prev-expr [prev-start-ix prev-end-ix]]))
        (last expr-index-pairs) expr-index-pairs)
      (meta expr-index-pairs)))
   
-(defn expr-of [text index]
-  (let [[start-ix end-ix] (index-pair-of (index-pairs-of text) index)]
-    (read-string (.substring text start-ix end-ix))))
 
-(defn exprs-of [text]
-  (let [index-pairs (index-pairs-of text)]
-    (with-meta 
-      (map 
-        (fn [[start-index end-index]] (read-string (.substring text start-index end-index))) 
-        index-pairs) (meta index-pairs))))
-
-(defn parent-index-of [index-pairs current-ix-pair]
+(defn parent-indexes-of [index-pairs index-pair]
+  (remove #(= % index-pair) index-pairs)
   )
 
 (defn index-pair->expr [text [start-index end-index]]

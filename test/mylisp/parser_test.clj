@@ -12,9 +12,12 @@
   )
 
 (deftest test-parent-expr
-  (let [text "[:root0 [:sub0 [:subsub0] :sub1] :root1]"
-        index-pairs (index-pairs-of text)]
-    (is (= :subsub0 (index-pair->expr text (index-pair-of index-pairs 19))))
-    #_(is (= "[:subsub0]" (parent-index-of index-pairs 19)))
-    )
-  )
+  (let [text "[:root0 [:sub0 [:subsub0] :sub1] :root1]"]
+    (loop [expected [:subsub0 [:subsub0] [:sub0 [:subsub0] :sub1]]
+           index-pairs (index-pairs-of text)]
+      (when (not (empty? expected))
+        (let [e (dbg (first expected))
+              _ (dbg (index-pair->expr text (index-pair-of index-pairs 19)))
+              ]
+          (recur (rest expected) 
+                 nil))))))
