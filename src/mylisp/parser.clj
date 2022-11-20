@@ -128,4 +128,57 @@
   
   )
 
+(defn expr-info-parser [text] ((insta/parser (grammar)) text :start :EXPR :total true))
 
+
+(defn expr-info-map [a] 
+  {
+   :SINGLE-LINE-COMMENT identity
+   :NEW-LINE (fn [& args])
+   :EXPR (fn ([expr]
+           (let [{:keys [instaparse.gll/start-index instaparse.gll/end-index]} (meta expr)]
+             (when (and start-index end-index)
+               (swap! a conj [start-index end-index]))))
+           ([reader-macro expr] (dbg expr)))
+   }
+  )
+
+(defn all-expr-index-pairs [text]
+  (let [ast (expr-info-parser text)
+        a (atom [])
+        m (expr-info-map a)
+        failure (insta/failure? ast)]
+    (insta/transform m ast)
+    (with-meta 
+      (if failure 
+        (butlast @a) 
+        @a) {:failure failure})))
+
+(defn index-pair-of [expr-index-pairs index]
+   (with-meta 
+     (reduce 
+       (fn [[prev-start-ix prev-end-ix] [new-start-ix new-end-ix]]
+         (if (and 
+               (and 
+                 (>= index new-start-ix)
+                 (<= index new-end-ix))
+               (< (- new-end-ix new-start-ix) 
+                  (- prev-end-ix prev-start-ix)))
+           [new-start-ix new-end-ix]
+           [prev-start-ix prev-end-ix]))
+       (last expr-index-pairs) expr-index-pairs)
+     (meta expr-index-pairs)))
+  
+(defn expr-of [text index]
+  (let [[start-ix end-ix] (index-pair-of (all-expr-index-pairs text) index)]
+    (.substring text start-ix end-ix)))
+
+(defn exprs-of [text]
+  (let [index-pairs (all-expr-index-pairs text)]
+    (with-meta 
+      (map 
+        (fn [[start-index end-index]] (.substring text start-index end-index)) 
+        index-pairs) (meta index-pairs))))
+
+(defn parent-index-of [index-pairs current-ix-pair]
+  )
