@@ -16,10 +16,10 @@
      SYNTAX-QUOTE = <'`'>
      DEREF = <'@'>
      READER-MACRO = <'#'> (SET | LIST | ('_' EXPR))
-     LIST = (<'('> OPTIONAL-SPACE <')'>) |  (<'('> ARGS <')'>)
-     VECTOR = (<'['> OPTIONAL-SPACE <']'>) |  (<'['> ARGS <']'>)
-     MAP = (<'{'> OPTIONAL-SPACE <'}'>) |  (<'{'> ARGS <'}'>)
-     SET = (<'{'> OPTIONAL-SPACE <'}'>) |  (<'{'> ARGS <'}'>)
+     LIST = (<'('> OPTIONAL-SPACE <')'>) |  (<'('> ARGS OPTIONAL-SPACE <')'>)
+     VECTOR = (<'['> OPTIONAL-SPACE <']'>) |  (<'['> ARGS OPTIONAL-SPACE<']'>)
+     MAP = (<'{'> OPTIONAL-SPACE <'}'>) |  (<'{'> ARGS OPTIONAL-SPACE <'}'>)
+     SET = (<'{'> OPTIONAL-SPACE <'}'>) |  (<'{'> ARGS OPTIONAL-SPACE <'}'>)
      <ARGS> = (EXPR SPACE)* EXPR
      KEYWORD = <':'> SYMBOL
      SYMBOL = #'[^\\'`~@\\(\\)\\[\\]{}:;#,\\^ \t\n0123456789]' #'[^\\'`~@\\(\\)\\[\\]{}:;,\\^ \t\n]*'
@@ -143,7 +143,7 @@
    }
   )
 
-(defn all-expr-index-pairs [text]
+(defn index-pairs-of [text]
   (let [ast (expr-info-parser text)
         a (atom [])
         m (expr-info-map a)
@@ -170,15 +170,18 @@
      (meta expr-index-pairs)))
   
 (defn expr-of [text index]
-  (let [[start-ix end-ix] (index-pair-of (all-expr-index-pairs text) index)]
-    (.substring text start-ix end-ix)))
+  (let [[start-ix end-ix] (index-pair-of (index-pairs-of text) index)]
+    (read-string (.substring text start-ix end-ix))))
 
 (defn exprs-of [text]
-  (let [index-pairs (all-expr-index-pairs text)]
+  (let [index-pairs (index-pairs-of text)]
     (with-meta 
       (map 
-        (fn [[start-index end-index]] (.substring text start-index end-index)) 
+        (fn [[start-index end-index]] (read-string (.substring text start-index end-index))) 
         index-pairs) (meta index-pairs))))
 
 (defn parent-index-of [index-pairs current-ix-pair]
   )
+
+(defn index-pair->expr [text [start-index end-index]]
+  (read-string (.substring text start-index end-index)))
