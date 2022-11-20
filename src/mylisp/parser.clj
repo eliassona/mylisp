@@ -131,17 +131,34 @@
 (defn expr-info-parser [text] ((insta/parser (grammar)) text :start :EXPR :total true))
 
 
-(defn expr-info-map [a] 
-  {
-   :SINGLE-LINE-COMMENT identity
-   :NEW-LINE (fn [& args])
-   :EXPR (fn ([expr]
-           (let [{:keys [instaparse.gll/start-index instaparse.gll/end-index]} (meta expr)]
+(defn update-expr! [a expr offset]
+  (let [{:keys [instaparse.gll/start-index instaparse.gll/end-index]} (meta expr)]
              (when (and start-index end-index)
-               (swap! a conj [start-index end-index]))))
-           ([reader-macro expr] (dbg (meta expr))))
-   }
-  )
+               (swap! a conj [(- start-index offset) end-index]))))
+(def offset-map 
+  {:SPECIAL-CHARS 
+   {:QUOTE 1
+    :SYNTAX-QUOTE 1
+    :UNQUOTE 1
+    :UNQUOTE-SPLICING 2}})
+
+(defn offset-of [[type [token]]]
+  (dbg ((dbg token) (type offset-map))))
+
+(defn expr-info-map [a] 
+  (let [the-fn (partial update-expr! a)]
+    {
+     :SINGLE-LINE-COMMENT identity
+     :NEW-LINE (fn [& args])
+     :EXPR (fn 
+             ([expr] (the-fn expr 0))
+             ([prefix expr] (the-fn expr (offset-of prefix))))
+     #_(fn ([expr]
+        (let [{:keys [instaparse.gll/start-index instaparse.gll/end-index]} (meta expr)]
+          (when (and start-index end-index)
+            (swap! a conj [start-index end-index]))))
+        ([reader-macro expr] (dbg (meta expr))))
+     }))
 
 (defn exprs-of [text]
   (let [ast (expr-info-parser text)
@@ -149,7 +166,7 @@
         m (expr-info-map a)
         failure (insta/failure? ast)]
     (insta/transform m ast)
-    (let [result (into #{} (map (fn [[ix0 ix1]] [(read-string (.substring text ix0 ix1)) [ix0 ix1]]) (if failure (butlast @a) @a)))]
+    (let [result (into #{} (map (fn [[ix0 ix1]] [(.substring text ix0 ix1) [ix0 ix1]]) (if failure (butlast @a) @a)))]
       (with-meta 
         result {:failure failure}))))
 
