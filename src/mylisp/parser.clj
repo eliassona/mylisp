@@ -139,7 +139,7 @@
            (let [{:keys [instaparse.gll/start-index instaparse.gll/end-index]} (meta expr)]
              (when (and start-index end-index)
                (swap! a conj [start-index end-index]))))
-           ([reader-macro expr] (dbg expr)))
+           ([reader-macro expr] (dbg (meta expr))))
    }
   )
 
@@ -168,10 +168,11 @@
        (last expr-index-pairs) expr-index-pairs)
      (meta expr-index-pairs)))
   
-
-(defn parent-indexes-of [index-pairs index-pair]
-  (remove #(= % index-pair) index-pairs)
+(comment
+  (def exprs (exprs-of "[:hej [:a :b] 2]"))
+  (expr-of (disj exprs (expr-of exprs 6)) 6)
   )
 
-(defn index-pair->expr [text [start-index end-index]]
-  (read-string (.substring text start-index end-index)))
+
+
+
