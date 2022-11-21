@@ -153,11 +153,7 @@
      :EXPR (fn 
              ([expr] (the-fn expr 0))
              ([prefix expr] (the-fn expr (offset-of prefix))))
-     #_(fn ([expr]
-        (let [{:keys [instaparse.gll/start-index instaparse.gll/end-index]} (meta expr)]
-          (when (and start-index end-index)
-            (swap! a conj [start-index end-index]))))
-        ([reader-macro expr] (dbg (meta expr))))
+     
      }))
 
 (defn exprs-of [text]
@@ -174,15 +170,18 @@
    (with-meta 
      (reduce 
        (fn [[prev-expr [prev-start-ix prev-end-ix]] [new-expr [new-start-ix new-end-ix]]]
-         (if (and 
-               (and 
-                 (>= index new-start-ix)
-                 (<= index new-end-ix))
-               (< (- new-end-ix new-start-ix) 
-                  (- prev-end-ix prev-start-ix)))
-           [new-expr [new-start-ix new-end-ix]]
-           [prev-expr [prev-start-ix prev-end-ix]]))
-       (last expr-index-pairs) expr-index-pairs)
+           (if (and 
+                 (and 
+                   (>= index new-start-ix)
+                   (<= index new-end-ix))
+                 (or (nil? prev-expr) 
+                     (< (- new-end-ix new-start-ix) 
+                        (- prev-end-ix prev-start-ix))))
+             [new-expr [new-start-ix new-end-ix]]
+             [prev-expr [prev-start-ix prev-end-ix]])
+           )
+       nil
+        expr-index-pairs)
      (meta expr-index-pairs)))
   
 (comment
