@@ -143,7 +143,7 @@
     :UNQUOTE-SPLICING 2}})
 
 (defn offset-of [[type [token]]]
-  (dbg ((dbg token) (type offset-map))))
+  (token (type offset-map)))
 
 (defn expr-info-map [a] 
   (let [the-fn (partial update-expr! a)]
